@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">PROJET_MB</string>
+    <string name="auth_failed">l\'authentification à échoué</string>
+    <string name="empty_field">veuillez remplir les champs</string>
+    <string name="account_created">le compte a correctement été créé</string>
+    <string name="account_notcreated">le compte n\'a pas pu être créé</string>
+
+
+    <string name="id_hint">identifiant</string>
+    <string name="password_hint">mot de passe</string>
+    <string name="signUp_text">créer un compte</string>
+    <string name="signIn_text">connexion</string>
+    <string name="upload_text">Upload</string>
+    <string name="img_desc">test</string>
+
+
+    <string name="menu_1">fil d\'actualité</string>
+    <string name="menu_2">envoyer une photo</string>
+    <string name="menu_3"> activité 3</string>
+    <string name="menu_4"> activité 4</string>
+
+    <string name="open"> drawer is open</string>
+    <string name="close"> drawer is closed</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="corriger">ouvrir l\'appareil photo</string>
+    <string name="uploader">Uploader</string>
+    <string name="image_preview">image preview</string>
+
+
+</resources>
