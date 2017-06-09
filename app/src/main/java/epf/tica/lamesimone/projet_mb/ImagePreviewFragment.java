@@ -1,7 +1,10 @@
 package epf.tica.lamesimone.projet_mb;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,11 +16,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,9 +32,25 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -55,45 +77,94 @@ import static android.content.Context.LOCATION_SERVICE;
 public class ImagePreviewFragment extends Fragment {
 
 
-    private static final float LOCATION_REFRESH_DISTANCE = 150;
-    private static final long LOCATION_REFRESH_TIME = 5000;
+    private static final float LOCATION_REFRESH_DISTANCE = 0;
+    private static final long LOCATION_REFRESH_TIME = 1000;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
     static final int REQUEST_IMAGE_CAPTURE = 1;
-    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final int REQUEST_CHECK_SETTINGS = 1;
+    private FusedLocationProviderClient mFusedLocationClient;
+    private boolean mRequestingLocationUpdates = false;
 
-    private final LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(final Location location) {
-            //your code here
-        }
+    protected void createLocationRequest() {
+        final LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(2000);
+        mLocationRequest.setFastestInterval(1000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        final LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(mLocationRequest);
 
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
+        SettingsClient client = LocationServices.getSettingsClient(getActivity());
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+        task.addOnSuccessListener(getActivity(), new OnSuccessListener<LocationSettingsResponse>() {
+            @Override
+            public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
+                mRequestingLocationUpdates = true;
+                initFusedLocationWrapper();
 
-        @Override
-        public void onProviderEnabled(String provider) {
-        }
+            }
+        });
 
-        @Override
-        public void onProviderDisabled(String provider) {
+        task.addOnFailureListener(getActivity(), new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                int statusCode = ((ApiException) e).getStatusCode();
+                switch (statusCode) {
+                    case CommonStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied, but this can be fixed
+                        // by showing the user a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            ResolvableApiException resolvable = (ResolvableApiException) e;
+                            resolvable.startResolutionForResult(getActivity(),
+                                    REQUEST_CHECK_SETTINGS);
+                        } catch (IntentSender.SendIntentException sendEx) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way
+                        // to fix the settings so we won't show the dialog.
+                        break;
+                }
+            }
+        });
+    }
+
+    private void initFusedLocationWrapper() {
+
+
+        if (ActivityCompat.checkSelfPermission(getActivity(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(getActivity(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
         }
-    };
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            myLocation = formatLocation(location.getLatitude(), location.getLongitude(), location.getAltitude());
+                        } else {
+                            Log.d("fail", "impossible de recuperer la position");
+                        }
+                    }
+
+                });
+    }
+
 
     ImageView imageview;
     TextView textTimeStamp, textLocation, textDate;
     Bitmap imageBitmap;
     String timeStamp;
     String date;
-    String location;
+    String myLocation;
+    String size;
+    String downloadString;
 
     private StorageReference mStorageRef;
-    GoogleApiClient mGoogleApiClient;
-
-    LocationManager mLocationManager;
-
-    OkHttpClient client = new OkHttpClient();
-
 
 
     public ImagePreviewFragment() {
@@ -114,28 +185,9 @@ public class ImagePreviewFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    MY_PERMISSIONS_REQUEST_LOCATION);
-            return;
-        }
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
-                LOCATION_REFRESH_DISTANCE, mLocationListener);
+        createLocationRequest();
 
 
-        mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
-                LOCATION_REFRESH_DISTANCE, mLocationListener);
-
-        //System.out.println(mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
-
-        location = formatLocation(mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude(),
-                mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude(),
-                mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getAltitude());
     }
 
     @Override
@@ -144,12 +196,16 @@ public class ImagePreviewFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_image_preview, container, false);
         mStorageRef = FirebaseStorage.getInstance().getReference();
+        initFusedLocationWrapper();
 
         imageview = (ImageView) view.findViewById(R.id.imagePreview);
 
         textTimeStamp = (TextView) view.findViewById(R.id.timestamp);
         textLocation = (TextView) view.findViewById(R.id.location);
         textDate = (TextView) view.findViewById(R.id.textDate);
+        if(myLocation!=null) {
+            textLocation.setText(myLocation);
+        }
 
 
         Button openCamera = (Button) view.findViewById(R.id.button2);
@@ -187,22 +243,36 @@ public class ImagePreviewFragment extends Fragment {
     }
 
 
-
-    public void uploadFile(StorageReference storageRef, Bitmap bitmap, String path) {
+    private void uploadFile(StorageReference storageRef, Bitmap bitmap, String path) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] data = baos.toByteArray();
+        size = String.format("%.2f", (double) data.length / 1000) + "Ko";
 
-        StorageReference riversRef = storageRef.child("images/" + path + ".jpg");
+        final StorageReference riversRef = storageRef.child("images/" + path + ".jpg");
         UploadTask uploadTask = riversRef.putBytes(data);
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @SuppressWarnings("VisibleForTests")
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // Get a URL to the uploaded content
-                //Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                Uri downloadUrl = taskSnapshot.getDownloadUrl();
                 System.out.println("upload success");
+                downloadString = downloadUrl.toString();
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                DatabaseReference myRef = database.getReference("photos");
+
+                DatabaseReference aRef = myRef.push();
+                aRef.child("url").setValue(downloadString);
+                aRef.child("date").setValue(timeStamp);
+                aRef.child("lieu").setValue(myLocation);
+                aRef.child("nom").setValue(timeStamp);
+                aRef.child("taille").setValue(size);
+
+
                 Toast.makeText(getActivity(), "photo envoyée",
                         Toast.LENGTH_SHORT).show();
+
             }
         });
         uploadTask.addOnFailureListener(new OnFailureListener() {
@@ -218,15 +288,6 @@ public class ImagePreviewFragment extends Fragment {
 
     }
 
-   private String post(String url, String json) throws IOException {
-        RequestBody body = RequestBody.create(JSON, json);
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .build();
-        Response response = client.newCall(request).execute();
-        return response.body().string();
-    }
 
     public void upload(Bitmap bitmap, String path) {
         mStorageRef = FirebaseStorage.getInstance().getReference();
@@ -242,9 +303,9 @@ public class ImagePreviewFragment extends Fragment {
 
     private String formatLocation(double latitude, double longitude, double altitude) {
         String location;
-        String Slatitude = String.format("%.2f", latitude);
-        String Slongitude = String.format("%.2f", longitude);
-        String Saltitude = String.format("%.2f", altitude);
+        String Slatitude = String.format("%.3f", latitude);
+        String Slongitude = String.format("%.3f", longitude);
+        String Saltitude = String.format("%.3f", altitude);
 
 
         location = "latitude: " + Slatitude + " longitude " + Slongitude + " altitude: " + Saltitude;
@@ -263,12 +324,13 @@ public class ImagePreviewFragment extends Fragment {
 
             date = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", Locale.FRANCE).format(new Date());
             textDate.setText(date);
-
-            textLocation.setText(location);
+            initFusedLocationWrapper();
+            textLocation.setText(myLocation);
 
 
         }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -293,9 +355,6 @@ public class ImagePreviewFragment extends Fragment {
             // permissions this app might request
         }
     }
-
-
-
 
 
 }

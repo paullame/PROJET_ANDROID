@@ -6,17 +6,14 @@ package epf.tica.lamesimone.projet_mb;
 
 public class NewsFeedElement {
     public String thumbnail;
-    public String data;
+    public String date;
     public String gps;
     public String fileName;
-
-
-
     public String fileSize;
 
-    public NewsFeedElement(String thumbnail, String data, String gps, String fileName, String fileSize){
+    public NewsFeedElement(String thumbnail, String date, String gps, String fileName, String fileSize){
         this.thumbnail=thumbnail;
-        this.data=data;
+        this.date=date;
         this.gps=gps;
         this.fileName=fileName;
         this.fileSize=fileSize;
@@ -31,12 +28,12 @@ public class NewsFeedElement {
         this.thumbnail = thumbnail;
     }
 
-    public  String getData() {
-        return data;
+    public  String getDate() {
+        return date;
     }
 
     public void setData(String data) {
-        this.data = data;
+        this.date = date;
     }
 
     public  String getGps() {

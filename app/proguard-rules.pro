@@ -24,11 +24,13 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep public class * implements com.bumptech.glide.module.GlideModule
--keep public enum com.bumptech.glide.load.resource.bitmap.ImageHeaderParser$** {
-  **[] $VALUES;
-  public *;
-}
 
-# for DexGuard only
--keepresourcexmlelements manifest/application/meta-data@value=GlideModule
+# Add this global rule
+-keepattributes Signature
+
+# This rule will properly ProGuard all the model classes in
+# the package com.yourcompany.models. Modify to fit the structure
+# of your app.
+-keepclassmembers class com.yourcompany.models.** {
+  *;
+}

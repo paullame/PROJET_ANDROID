@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,8 +14,26 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 
 /**
@@ -28,16 +47,9 @@ import java.util.List;
 public class NewsFeedFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
 
-    ListView listView;
-
-    private String[] prenoms = new String[]{
-            "Antoine", "Benoit", "Cyril", "David", "Eloise", "Florent",
-            "Gerard", "Hugo", "Ingrid", "Jonathan", "Kevin", "Logan",
-            "Mathieu", "Noemie", "Olivia", "Philippe", "Quentin", "Romain",
-            "Sophie", "Tristan", "Ulric", "Vincent", "Willy", "Xavier",
-            "Yann", "Zoé"
-    };
-
+    private ListView listView;
+    private OkHttpClient client = new OkHttpClient();
+    private ArrayList<String> array=null;
 
 
 
@@ -56,6 +68,7 @@ public class NewsFeedFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
     }
 
     @Override
@@ -65,14 +78,82 @@ public class NewsFeedFragment extends Fragment {
 
         listView = (ListView) view.findViewById(R.id.photoFeed);
 
-        List<NewsFeedElement> elements =generateElements();
-        NewsFeedAdapter adapter = new NewsFeedAdapter(getContext(), elements);
-        listView.setAdapter(adapter);
 
-        View cellule;
+
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("photos");
+
+        // Read from the database
+        myRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                List<NewsFeedElement> tempArray = new ArrayList<NewsFeedElement>();
+
+                array = new ArrayList<String>(10);
+                NewsFeedElement nfe;
+                for (DataSnapshot objSnapshot : dataSnapshot.getChildren()) {
+
+                    String url;
+                    String date;
+                    String lieu;
+                    String nom;
+                    String taille;
+                    String temp = (String) objSnapshot.getValue();
+                    array.add(temp);
+                    for (DataSnapshot obj : objSnapshot.getChildren()) {
+                        //System.out.println(obj.getValue());
+
+
+                    }
+
+                }
+                nfe = generateElements(array.get(4), array.get(0), array.get(1), array.get(2), array.get(3));
+                tempArray.add(nfe);
+                final List<NewsFeedElement> elements = tempArray;
+                NewsFeedAdapter adapter = new NewsFeedAdapter(getContext(), elements);
+                listView.setAdapter(adapter);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+
+        });
 
 
         return view;
+    }
+
+    private void run(String url) throws IOException, JSONException {
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        Response response = client.newCall(request).execute();
+        String jsonData = response.body().string();
+        JSONObject Jobject = new JSONObject(jsonData);
+        JSONArray Jarray = Jobject.getJSONArray("");
+
+        for (int i = 0; i < Jarray.length(); i++) {
+            JSONObject object     = Jarray.getJSONObject(i);
+        }
     }
 
     private List<NewsFeedElement> generateElements(){
@@ -85,6 +166,10 @@ public class NewsFeedFragment extends Fragment {
         return elements;
     }
 
+    private NewsFeedElement generateElements(String url, String date, String lieu, String nom, String size){
+        NewsFeedElement news = new NewsFeedElement(url, date, lieu,nom,size);
+        return news;
+    }
 
 
 

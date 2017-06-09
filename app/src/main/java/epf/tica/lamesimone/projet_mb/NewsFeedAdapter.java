@@ -58,7 +58,7 @@ public class NewsFeedAdapter extends ArrayAdapter<NewsFeedElement> {
         NewsFeedElement newsFeedElement = getItem(position);
 
         Glide.with(getContext()).load(newsFeedElement.getThumbnail()).into(viewHolder.thumbnail);
-        viewHolder.data.setText(newsFeedElement.getData());
+        viewHolder.data.setText(newsFeedElement.getDate());
         viewHolder.gps.setText(newsFeedElement.getGps());
         viewHolder.fileName.setText(newsFeedElement.getFileName());
         viewHolder.fileSize.setText(newsFeedElement.getFileSize());

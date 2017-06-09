@@ -3,13 +3,11 @@
     package="epf.tica.lamesimone.projet_mb">
 
     <uses-feature android:name="android.hardware.camera" android:required="true" />
-    <uses-feature android:name="android.hardware.location.gps" />
 
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
 
 
     <application
@@ -59,7 +57,6 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".HomePageActivity" />
         <activity android:name=".MainActivity" />
 
 

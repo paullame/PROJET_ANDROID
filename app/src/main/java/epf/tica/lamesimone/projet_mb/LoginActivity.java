@@ -30,7 +30,6 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private StorageReference mStorageRef;
-    Uri path =Uri.parse("android.resource://epf.tica.lamesimone.projet_mb/"+ R.drawable.fox);
 
     private String userMail;
     private String userUID;
@@ -39,7 +38,6 @@ public class LoginActivity extends AppCompatActivity {
     public static final String EXTRA_UID = "com.example.myfirstapp.UID";
 
 
-    String imageUri = path.toString();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,11 +71,6 @@ public class LoginActivity extends AppCompatActivity {
                 // ...
             }
         };
-try {
-
-} catch (NullPointerException e) {
-
-}
 
     }
 
