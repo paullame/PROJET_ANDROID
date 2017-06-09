@@ -61,6 +61,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -84,6 +85,10 @@ public class ImagePreviewFragment extends Fragment {
     private static final int REQUEST_CHECK_SETTINGS = 1;
     private FusedLocationProviderClient mFusedLocationClient;
     private boolean mRequestingLocationUpdates = false;
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    OkHttpClient client = new OkHttpClient();
+
+
 
     protected void createLocationRequest() {
         final LocationRequest mLocationRequest = new LocationRequest();
@@ -163,6 +168,7 @@ public class ImagePreviewFragment extends Fragment {
     String myLocation;
     String size;
     String downloadString;
+    ArrayList<NewsFeedElement> elements;
 
     private StorageReference mStorageRef;
 
@@ -242,6 +248,23 @@ public class ImagePreviewFragment extends Fragment {
 
     }
 
+    private String jsonBuilder(String date,String lieu, String nom, String taille, String url){
+        String json="{\"photos\" : { \""+date+"\" : { \"date\" : \""+date+"\",\"lieu\" : \""+lieu+"\",\"nom\" : \""+nom+"\",\"taille\" : \""+taille+"\",\"url\" : \""+url+"\"}}}";
+
+        return json;
+    }
+
+    private String post(String url, String json) throws IOException {
+
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
+
 
     private void uploadFile(StorageReference storageRef, Bitmap bitmap, String path) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -259,16 +282,14 @@ public class ImagePreviewFragment extends Fragment {
                 Uri downloadUrl = taskSnapshot.getDownloadUrl();
                 System.out.println("upload success");
                 downloadString = downloadUrl.toString();
-                FirebaseDatabase database = FirebaseDatabase.getInstance();
-                DatabaseReference myRef = database.getReference("photos");
 
-                DatabaseReference aRef = myRef.push();
-                aRef.child("url").setValue(downloadString);
-                aRef.child("date").setValue(timeStamp);
-                aRef.child("lieu").setValue(myLocation);
-                aRef.child("nom").setValue(timeStamp);
-                aRef.child("taille").setValue(size);
+/*                try {
+                    post("https://projet-mb.firebaseio.com/photos.json",jsonBuilder(timeStamp,myLocation,timeStamp,size,downloadString));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }*/
 
+                sendData();
 
                 Toast.makeText(getActivity(), "photo envoyée",
                         Toast.LENGTH_SHORT).show();
@@ -286,6 +307,16 @@ public class ImagePreviewFragment extends Fragment {
         });
 
 
+    }
+    public void sendData(){
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("photos").push();
+
+        myRef.child("url").setValue(downloadString);
+        myRef.child("date").setValue(timeStamp);
+        myRef.child("lieu").setValue(myLocation);
+        myRef.child("nom").setValue(timeStamp);
+        myRef.child("taille").setValue(size);
     }
 
 

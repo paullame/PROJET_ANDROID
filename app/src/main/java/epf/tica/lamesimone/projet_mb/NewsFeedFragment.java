@@ -3,6 +3,7 @@ package epf.tica.lamesimone.projet_mb;
 import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -19,13 +20,16 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -47,9 +51,27 @@ import okhttp3.Response;
 public class NewsFeedFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
 
+    public ListView getListView() {
+        return listView;
+    }
+
     private ListView listView;
     private OkHttpClient client = new OkHttpClient();
+    private ArrayList<String> arrayDate=null;
+    private ArrayList<String> arrayLieu=null;
+    private ArrayList<String> arrayNom=null;
+    private ArrayList<String> arrayTaille=null;
+    private ArrayList<String> arrayUrl=null;
     private ArrayList<String> array=null;
+    boolean dateOk =false;
+    boolean lieuOk =false;
+    boolean nomOk =false;
+    boolean tailleOk =false;
+    boolean urlOk =false;
+    private FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private final DatabaseReference myRef = database.getReference("photos");
+    private ValueEventListener datalistener;
+    private Query mostRecent;
 
 
 
@@ -81,92 +103,41 @@ public class NewsFeedFragment extends Fragment {
 
 
 
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("photos");
+        datalistener= new ValueEventListener() {
 
-        // Read from the database
-        myRef.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                List<NewsFeedElement> tempArray = new ArrayList<NewsFeedElement>();
-
-                array = new ArrayList<String>(10);
-                NewsFeedElement nfe;
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                ArrayList<NewsFeedElement> tempArray = new ArrayList<>();
                 for (DataSnapshot objSnapshot : dataSnapshot.getChildren()) {
-
-                    String url;
-                    String date;
-                    String lieu;
-                    String nom;
-                    String taille;
-                    String temp = (String) objSnapshot.getValue();
-                    array.add(temp);
+                    array = new ArrayList<>();
+                    NewsFeedElement nfe;
                     for (DataSnapshot obj : objSnapshot.getChildren()) {
-                        //System.out.println(obj.getValue());
-
-
+                        String temp = (String) obj.getValue();
+                        array.add(temp);
                     }
-
+                    nfe = generateElements(array.get(4), array.get(0), array.get(1), array.get(2), array.get(3));
+                    tempArray.add(nfe);
                 }
-                nfe = generateElements(array.get(4), array.get(0), array.get(1), array.get(2), array.get(3));
-                tempArray.add(nfe);
-                final List<NewsFeedElement> elements = tempArray;
-                NewsFeedAdapter adapter = new NewsFeedAdapter(getContext(), elements);
+                NewsFeedAdapter adapter = new NewsFeedAdapter(getContext(), tempArray);
                 listView.setAdapter(adapter);
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
 
             }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
             @Override
             public void onCancelled(DatabaseError databaseError) {
 
             }
+        };
 
-        });
+        mostRecent = myRef.orderByKey();
+      mostRecent.addValueEventListener(datalistener);
+
 
 
         return view;
     }
 
-    private void run(String url) throws IOException, JSONException {
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
 
-        Response response = client.newCall(request).execute();
-        String jsonData = response.body().string();
-        JSONObject Jobject = new JSONObject(jsonData);
-        JSONArray Jarray = Jobject.getJSONArray("");
-
-        for (int i = 0; i < Jarray.length(); i++) {
-            JSONObject object     = Jarray.getJSONObject(i);
-        }
-    }
-
-    private List<NewsFeedElement> generateElements(){
-        List<NewsFeedElement> elements = new ArrayList<NewsFeedElement>();
-        elements.add(new NewsFeedElement("https://firebasestorage.googleapis.com/v0/b/projet-mb.appspot.com/o/images%2F20170607_125912.jpg?alt=media&token=f31ce5af-7ab7-48e5-b0d6-681f391dc800", "01/01/01", "1 rue A","lol1","100"));
-        elements.add(new NewsFeedElement("https://firebasestorage.googleapis.com/v0/b/projet-mb.appspot.com/o/images%2F20170607_191506.jpg?alt=media&token=b3de5b1e-43df-4cd6-8b53-3afb074126d8", "02/01/01", "2 rue A","lol2","200"));
-        elements.add(new NewsFeedElement("https://firebasestorage.googleapis.com/v0/b/projet-mb.appspot.com/o/images%2F20170607_191506.jpg?alt=media&token=b3de5b1e-43df-4cd6-8b53-3afb074126d8", "03/01/01", "3 rue A","lol3","300"));
-        elements.add(new NewsFeedElement("https://firebasestorage.googleapis.com/v0/b/projet-mb.appspot.com/o/images%2F20170607_191506.jpg?alt=media&token=b3de5b1e-43df-4cd6-8b53-3afb074126d8", "04/01/01", "4 rue A","lol4","400"));
-        elements.add(new NewsFeedElement("https://firebasestorage.googleapis.com/v0/b/projet-mb.appspot.com/o/images%2F20170607_191506.jpg?alt=media&token=b3de5b1e-43df-4cd6-8b53-3afb074126d8", "05/01/01", "5 rue A","lol5","500"));
-        return elements;
-    }
-
-    private NewsFeedElement generateElements(String url, String date, String lieu, String nom, String size){
+    public NewsFeedElement generateElements(String url, String date, String lieu, String nom, String size){
         NewsFeedElement news = new NewsFeedElement(url, date, lieu,nom,size);
         return news;
     }
@@ -189,7 +160,13 @@ public class NewsFeedFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
+       // myRef.removeEventListener(datalistener);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mostRecent.removeEventListener(datalistener);
     }
 
     /**
