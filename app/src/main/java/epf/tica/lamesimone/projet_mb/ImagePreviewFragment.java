@@ -248,24 +248,6 @@ public class ImagePreviewFragment extends Fragment {
 
     }
 
-    private String jsonBuilder(String date,String lieu, String nom, String taille, String url){
-        String json="{\"photos\" : { \""+date+"\" : { \"date\" : \""+date+"\",\"lieu\" : \""+lieu+"\",\"nom\" : \""+nom+"\",\"taille\" : \""+taille+"\",\"url\" : \""+url+"\"}}}";
-
-        return json;
-    }
-
-    private String post(String url, String json) throws IOException {
-
-        RequestBody body = RequestBody.create(JSON, json);
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .build();
-        Response response = client.newCall(request).execute();
-        return response.body().string();
-    }
-
-
     private void uploadFile(StorageReference storageRef, Bitmap bitmap, String path) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
@@ -282,15 +264,8 @@ public class ImagePreviewFragment extends Fragment {
                 Uri downloadUrl = taskSnapshot.getDownloadUrl();
                 System.out.println("upload success");
                 downloadString = downloadUrl.toString();
-
-/*                try {
-                    post("https://projet-mb.firebaseio.com/photos.json",jsonBuilder(timeStamp,myLocation,timeStamp,size,downloadString));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }*/
-
                 sendData();
-
+                new DataAsyncTask().execute("un utilisateur a envoyé une nouvelle photo");
                 Toast.makeText(getActivity(), "photo envoyée",
                         Toast.LENGTH_SHORT).show();
 

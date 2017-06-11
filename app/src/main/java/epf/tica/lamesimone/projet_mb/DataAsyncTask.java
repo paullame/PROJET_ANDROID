@@ -8,68 +8,68 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * Created by paullame on 09/06/2017.
  */
 
 
-public class DataAsyncTask extends AsyncTask<DatabaseReference, Void, ArrayList<NewsFeedElement>> {
-
-    private NewsFeedFragment fragment;
-    ArrayList<NewsFeedElement> elements;
-    ListView listView;
-
-    public DataAsyncTask(NewsFeedFragment frag, ListView lview){
-        fragment=frag;
-        listView=lview;
-    }
-
-    ArrayList<NewsFeedElement> tempArray;
-    ArrayList<String> array;
-    protected ArrayList<NewsFeedElement> doInBackground(DatabaseReference... ref) {
-        for(int i=0; i<ref.length;i++) {
-            ref[0].addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    tempArray = new ArrayList<>();
-                    for (DataSnapshot objSnapshot : dataSnapshot.getChildren()) {
-                        array = new ArrayList<>();
-                        NewsFeedElement nfe;
-                        for (DataSnapshot obj : objSnapshot.getChildren()) {
-                            String temp = (String) obj.getValue();
-                            array.add(temp);
-                        }
-                        nfe = generateElements(array.get(4), array.get(0), array.get(1), array.get(2), array.get(3));
-                        tempArray.add(nfe);
-                    }
-
-                }
+public class DataAsyncTask extends AsyncTask<String, Void, String> {
 
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    OkHttpClient client = new OkHttpClient();
 
-                }
-            });
+
+
+
+    protected String doInBackground(String... message) {
+        String result="ERROR, NO RETURN MESSAGE";
+        for(int i=0; i<message.length;i++)
+        try {
+           result= post("https://fcm.googleapis.com/fcm/send", jsonBuilder(message[i]));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return tempArray;
+        return result;
     }
 
     protected void onProgressUpdate() {
     }
 
 
-    protected void onPostExecute(ArrayList<NewsFeedElement> array) {
-        elements = tempArray;
-
+    protected void onPostExecute(String result) {
+        System.out.println(result);
     }
 
-    public NewsFeedElement generateElements(String url, String date, String lieu, String nom, String size){
-        NewsFeedElement news = new NewsFeedElement(url, date, lieu,nom,size);
-        return news;
+
+
+    private String jsonBuilder(String message){
+        String json="{\"to\" : \"/topics/news\", \"data\": { \"message\": \""+message+"\",}}";
+
+        return json;
+    }
+
+    private String post(String url, String json) throws IOException {
+
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-type","application/json")
+                .addHeader("Authorization","key=AAAAC33V2lE:APA91bHnNfwqvGbs88HROPMyOKW7PD4V_K2XDHd3N8obo-NXGGd9_qUG4xq8i3hQRV0737niXZc8Mz47t76KCenIaxamPGx3PWRHVoczgb6kkx7saMTwFtbV_7XDhUVgkJ64HZyalheR")
+                .post(body)
+                .build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
     }
 
 
