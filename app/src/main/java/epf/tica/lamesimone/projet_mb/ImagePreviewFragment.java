@@ -226,7 +226,13 @@ public class ImagePreviewFragment extends Fragment {
         bouton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                upload(imageBitmap, timeStamp);
+                try {
+                    upload(imageBitmap, timeStamp);
+                }
+                catch (NullPointerException e) {
+                    Toast.makeText(getActivity(), "oups! il faut d'abord prendre une photo",
+                            Toast.LENGTH_SHORT).show();
+                }
             }
         });
         return view;

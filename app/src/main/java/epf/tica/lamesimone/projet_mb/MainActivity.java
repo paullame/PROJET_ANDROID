@@ -55,8 +55,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private NavigationView navigationView;
     private int mNavItemId;
 
-    private String userEmail;
-    private String userUID;
+    public static String userEmail;
+    public static String userUID;
 
 
     @Override
@@ -64,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        FirebaseMessaging.getInstance().subscribeToTopic("news");
 
 
         // information utilisateur
@@ -89,8 +88,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView.addHeaderView(header);
         TextView textview1 = (TextView) header.findViewById(R.id.textView3);
         TextView textview2 = (TextView) header.findViewById(R.id.textView2);
-        textview1.setText(userEmail);
-        textview2.setText(userUID);
+        textview1.setText("identifiant: \n"+userEmail);
+        textview2.setText("numero utilisateur: \n"+userUID);
 
         //navigation
         navigationView.getMenu().findItem(mNavItemId).setChecked(true);
@@ -152,12 +151,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void navigate(final int itemId) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        BlankFragment blank2 = new BlankFragment();
-        BlankFragment blank3 = new BlankFragment();
-
-
-
-
 
         switch (itemId) {
             case R.id.menu1:
@@ -173,16 +166,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 ImagePreviewFragment imagepreview = new ImagePreviewFragment();
                 imagepreview.setArguments(bundle);
                 transaction.replace(R.id.content_frame, imagepreview);
-                transaction.addToBackStack(null);
-                transaction.commit();
-                break;
-
-
-            case R.id.menu3:
-                break;
-
-            case R.id.menu4 :
-                transaction.replace(R.id.content_frame, blank3);
                 transaction.addToBackStack(null);
                 transaction.commit();
                 break;

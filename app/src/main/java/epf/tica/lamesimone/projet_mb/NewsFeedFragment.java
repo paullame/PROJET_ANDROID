@@ -30,7 +30,11 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -115,8 +119,17 @@ public class NewsFeedFragment extends Fragment {
                         String temp = (String) obj.getValue();
                         array.add(temp);
                     }
-                    nfe = generateElements(array.get(4), array.get(0), array.get(1), array.get(2), array.get(3));
+                    SimpleDateFormat parseDate = new SimpleDateFormat("yyyyMMdd_hhmmss");
+                    SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
+                    Date date=null;
+                    try {
+                        date = parseDate.parse(array.get(0));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    nfe = generateElements(array.get(4),format.format(date), array.get(1), array.get(2), array.get(3));
                     tempArray.add(nfe);
+                    Collections.reverse(tempArray);
                 }
                 NewsFeedAdapter adapter = new NewsFeedAdapter(getContext(), tempArray);
                 listView.setAdapter(adapter);
@@ -161,6 +174,12 @@ public class NewsFeedFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
        // myRef.removeEventListener(datalistener);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        mostRecent.removeEventListener(datalistener);
     }
 
     @Override

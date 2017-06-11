@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PROJET_MB</string>
+    <string name="app_name">BlazePic</string>
     <string name="auth_failed">l\'authentification à échoué</string>
     <string name="empty_field">veuillez remplir les champs</string>
     <string name="account_created">le compte a correctement été créé</string>
@@ -16,17 +16,21 @@
 
     <string name="menu_1">fil d\'actualité</string>
     <string name="menu_2">envoyer une photo</string>
-    <string name="menu_3"> activité 3</string>
-    <string name="menu_4"> activité 4</string>
 
     <string name="open"> drawer is open</string>
     <string name="close"> drawer is closed</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="corriger">ouvrir l\'appareil photo</string>
     <string name="uploader">Uploader</string>
     <string name="image_preview">image preview</string>
+    <string name="app_description">Bienvenue sur BlazePic, si vous ne possedez pas de compte, veuillez remplir les champs et lancer la creation de compte.
+        vous pouvez ensuite vous connecter.
+        Sinon utilisez le compte de test.
+    \n l\'identifiant doit respecter la syntaxe d\'une adresse mail, et le mot de passe doit faire au moins 6 caractères.</string>
+    <string name="previewdate">date</string>
+    <string name="nom_de_fichier">nom de fichier</string>
+    <string name="position">position</string>
 
 
 </resources>

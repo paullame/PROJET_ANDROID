@@ -5,9 +5,5 @@
         android:title="@string/menu_1"/>
     <item android:id="@+id/menu2"
         android:title="@string/menu_2" />
-    <item android:id="@+id/menu3"
-        android:title="@string/menu_3" />
-    <item android:id="@+id/menu4"
-        android:title="@string/menu_4" />
     </group>
 </menu>
