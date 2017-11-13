@@ -15,7 +15,7 @@ buildscript {
 }
 
 plugins {
-
+    id "org.sonarqube" version "2.6"
 }
 
 allprojects {
@@ -26,4 +26,12 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+sonarqube {
+    properties {
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.organization", "paullame-github"
+        property "sonar.login", "43e8e3326fbb6bfe86f87338f4bb51c9d1ed22e6"
+    }
 }

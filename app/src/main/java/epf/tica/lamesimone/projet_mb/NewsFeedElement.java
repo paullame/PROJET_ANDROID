@@ -32,7 +32,7 @@ public class NewsFeedElement {
         return date;
     }
 
-    public void setData(String data) {
+    public void setDate(String date) {
         this.date = date;
     }
 
