@@ -15,9 +15,3 @@ Un partage de photos rapide avec leur différentes données (nom de fichier, tai
 Un affichage synthétique et rapide des photos à la facon (Instagram) (Firebase Realtime database + Glide )
 
 Une navigation intuitive et belle (Android Navigation Drawer)
-
-L'application possède cependant certaines faiblesses
-
-Lorsque l'utilisateur n'a pas la géolocalisation activée, l'application propose de l'activer. Apres la prise de la photo le champ de géolocalisation est vide toutefois la donnée est bien envoyée au serveur
-
-Certaines photos ne peuvent ne pas s'afficher, le problème venant de glide qui refuse certains liens de photos
