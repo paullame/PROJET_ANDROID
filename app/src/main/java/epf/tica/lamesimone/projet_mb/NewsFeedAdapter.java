@@ -12,6 +12,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.firebase.ui.storage.images.FirebaseImageLoader;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 
@@ -33,6 +36,9 @@ public class NewsFeedAdapter extends ArrayAdapter<NewsFeedElement> {
         public TextView fileName;
         public TextView fileSize;
     }
+
+    FirebaseStorage storage = FirebaseStorage.getInstance();
+    StorageReference storageReference =storage.getReference();
 
     public View getView(int position, View convertView, ViewGroup parent) {
 
@@ -57,11 +63,32 @@ public class NewsFeedAdapter extends ArrayAdapter<NewsFeedElement> {
 
         NewsFeedElement newsFeedElement = getItem(position);
 
-        Glide.with(getContext()).load(newsFeedElement.getThumbnail()).into(viewHolder.thumbnail);
-        viewHolder.data.setText(newsFeedElement.getDate());
-        viewHolder.gps.setText(newsFeedElement.getGps());
-        viewHolder.fileName.setText(newsFeedElement.getFileName());
-        viewHolder.fileSize.setText(newsFeedElement.getFileSize());
+
+        StorageReference storagePath = storageReference.child(newsFeedElement.getThumbnail());
+
+        GlideApp.with(getContext())
+                .load(storagePath)
+                .into(viewHolder.thumbnail);
+        try {
+            viewHolder.data.setText(newsFeedElement.getDate());
+        } catch (NullPointerException e){
+            viewHolder.data.setText("donnée non disponible");
+        }
+        try {
+            viewHolder.gps.setText(newsFeedElement.getGps());
+        } catch(NullPointerException e){
+            viewHolder.gps.setText("donnée non disponible");
+        }
+        try {
+            viewHolder.fileName.setText(newsFeedElement.getFileName());
+        } catch (NullPointerException e) {
+            viewHolder.fileName.setText("donnée non disponible");
+        }
+        try {
+            viewHolder.fileSize.setText(newsFeedElement.getFileSize());
+        } catch(NullPointerException e) {
+            viewHolder.fileSize.setText("donnée non disponible");
+        }
 
         //nous renvoyons notre vue à l'adapter, afin qu'il l'affiche
         //et qu'il puisse la mettre à recycler lorsqu'elle sera sortie de l'écran

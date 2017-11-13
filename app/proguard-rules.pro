@@ -31,6 +31,13 @@
 # This rule will properly ProGuard all the model classes in
 # the package com.yourcompany.models. Modify to fit the structure
 # of your app.
--keepclassmembers class com.yourcompany.models.** {
+-keepclassmembers class epf.tica.lamesimone.projet_mb.** {
   *;
+}
+
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep public class * extends com.bumptech.glide.AppGlideModule
+-keep public enum com.bumptech.glide.load.resource.bitmap.ImageHeaderParser$** {
+    **[] $VALUES;
+    public *;
 }
